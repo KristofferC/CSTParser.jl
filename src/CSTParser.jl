@@ -84,14 +84,14 @@ function parse_expression(ps::ParseState)
         return error_unexpected(ps, ps.t.startbyte, ps.t)
     else
         ps.errored = true
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], Variable[], "Unknown error")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unknown error")
     end
 
     while !closer(ps) && !(ps.closer.precedence == DotOp && ismacro(ret))
         @catcherror ps ret = parse_compound(ps, ret)
     end
     if ps.closer.precedence != DotOp && closer(ps) && ret isa EXPR{LITERAL{Tokens.MACRO}}
-        ret = EXPR{MacroCall}(EXPR[ret], Variable[], "")
+        ret = EXPR{MacroCall}(EXPR[ret], "")
     end
 
     return ret
@@ -120,7 +120,7 @@ function parse_compound(ps::ParseState, ret)
     elseif ps.nt.kind == Tokens.DO
         ret = parse_do(ps, ret)
     elseif isajuxtaposition(ps, ret)
-        op = EXPR{OPERATOR{TimesOp,Tokens.STAR,false}}(EXPR[], 0, 1:0, Variable[], "")
+        op = EXPR{OPERATOR{TimesOp,Tokens.STAR,false}}(EXPR[], 0, 1:0, "")
         ret = parse_operator(ps, ret, op)
     elseif ps.nt.kind == Tokens.LPAREN && isemptyws(ps.ws)
         ret = @closer ps paren parse_call(ps, ret)
@@ -140,24 +140,24 @@ function parse_compound(ps::ParseState, ret)
     elseif (ret isa EXPR{IDENTIFIER} || (ret isa EXPR{BinarySyntaxOpCall} && ret.args[2] isa EXPR{OPERATOR{DotOp,Tokens.DOT,false}})) && (ps.nt.kind == Tokens.STRING || ps.nt.kind == Tokens.TRIPLE_STRING)
         next(ps)
         @catcherror ps arg = parse_string_or_cmd(ps, ret)
-        ret = EXPR{x_Str}(EXPR[ret, arg], Variable[], "")
+        ret = EXPR{x_Str}(EXPR[ret, arg], "")
     # Suffix on x_str
     elseif ret isa EXPR{x_Str} && ps.nt.kind == Tokens.IDENTIFIER
         next(ps)
         arg = INSTANCE(ps)
-        push!(ret, EXPR{LITERAL{Tokens.STRING}}(EXPR[], arg.fullspan, arg.span, Variable[], arg.val))
+        push!(ret, EXPR{LITERAL{Tokens.STRING}}(EXPR[], arg.fullspan, arg.span, arg.val))
     elseif (ret isa EXPR{IDENTIFIER} || (ret isa EXPR{BinarySyntaxOpCall} && ret.args[2] isa EXPR{OPERATOR{DotOp,Tokens.DOT,false}})) && ps.nt.kind == Tokens.CMD
         next(ps)
         @catcherror ps arg = parse_string_or_cmd(ps, ret)
-        ret = EXPR{x_Cmd}(EXPR[ret, arg], Variable[], "")
+        ret = EXPR{x_Cmd}(EXPR[ret, arg], "")
     elseif ret isa EXPR{x_Cmd} && ps.nt.kind == Tokens.IDENTIFIER
         next(ps)
         arg = INSTANCE(ps)
-        push!(ret, EXPR{LITERAL{Tokens.STRING}}(EXPR[], arg.fullspan, 1:span(arg), Variable[], arg.val))
+        push!(ret, EXPR{LITERAL{Tokens.STRING}}(EXPR[], arg.fullspan, 1:span(arg), arg.val))
     elseif ret isa EXPR{UnarySyntaxOpCall} && ret.args[2] isa EXPR{OPERATOR{16,Tokens.PRIME,d1}} where d1
         # prime operator followed by an identifier has an implicit multiplication
         @catcherror ps nextarg = @precedence ps 11 parse_expression(ps)
-        ret = EXPR{BinaryOpCall}(EXPR[ret, EXPR{OPERATOR{TimesOp,Tokens.STAR,false}}(EXPR[], 0, 1:0, Variable[], ""), nextarg], Variable[], "")
+        ret = EXPR{BinaryOpCall}(EXPR[ret, EXPR{OPERATOR{TimesOp,Tokens.STAR,false}}(EXPR[], 0, 1:0, ""), nextarg], "")
 ################################################################################
 # Everything below here is an error
 ################################################################################
@@ -170,19 +170,19 @@ function parse_compound(ps::ParseState, ret)
             # TODO: Which operator? How do we get at the spelling
             0:0, [], "Unexpected operator"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, Variable[], "Unexpected operator")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, "Unexpected operator")
     elseif ps.nt.kind == Tokens.IDENTIFIER
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedIdentifier}(
             ps.nt.startbyte:ps.nt.endbyte, [], "Unexpected identifier"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, Variable[], "Unexpected identifier")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, "Unexpected identifier")
     else
         ps.errored = true
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, Variable[], "Unknown error")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, "Unknown error")
     end
     if ps.errored
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, Variable[], "Unknown error")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, 0:-1, "Unknown error")
     end
     return ret
 end
@@ -193,7 +193,7 @@ end
 Parses an expression starting with a `(`.
 """
 function parse_paren(ps::ParseState)
-    ret = EXPR{TupleH}(EXPR[INSTANCE(ps)], Variable[], "")
+    ret = EXPR{TupleH}(EXPR[INSTANCE(ps)], "")
     format_lbracket(ps)
 
     @catcherror ps @default ps @nocloser ps inwhere @closer ps paren parse_comma_sep(ps, ret, false, true)
@@ -201,7 +201,7 @@ function parse_paren(ps::ParseState)
     if length(ret.args) == 2 && !(ret.args[2] isa EXPR{UnarySyntaxOpCall} && ret.args[2].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
 
         if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
-            ret = EXPR{InvisBrackets}(ret.args, Variable[], "")
+            ret = EXPR{InvisBrackets}(ret.args, "")
         end
     end
 
@@ -222,7 +222,7 @@ function parse(str::String, cont = false)
     ps = ParseState(str)
     x, ps = parse(ps, cont)
     if ps.errored
-        x = EXPR{ERROR}(EXPR[], 0, Variable[], "Unknown error")
+        x = EXPR{ERROR}(EXPR[], 0, "Unknown error")
     end
     return x
 end
@@ -239,15 +239,15 @@ function parse_doc(ps::ParseState)
         end
 
         ret = parse_expression(ps)
-        ret = EXPR{MacroCall}(EXPR[GlobalRefDOC, doc, ret], Variable[], "")
+        ret = EXPR{MacroCall}(EXPR[GlobalRefDOC, doc, ret], "")
     elseif ps.nt.kind == Tokens.IDENTIFIER && ps.nt.val == "doc" && (ps.nnt.kind == Tokens.STRING || ps.nnt.kind == Tokens.TRIPLE_STRING)
         next(ps)
         doc = INSTANCE(ps)
         next(ps)
         @catcherror ps arg = parse_string_or_cmd(ps, doc)
-        doc = EXPR{x_Str}(EXPR[doc, arg], Variable[], "")
+        doc = EXPR{x_Str}(EXPR[doc, arg], "")
         ret = parse_expression(ps)
-        ret = EXPR{MacroCall}(EXPR[GlobalRefDOC, doc, ret], Variable[], "")
+        ret = EXPR{MacroCall}(EXPR[GlobalRefDOC, doc, ret], "")
     else
         ret = parse_expression(ps)
     end
@@ -256,16 +256,16 @@ end
 
 function parse(ps::ParseState, cont = false)
     if ps.l.io.size == 0
-        return (cont ? EXPR{FileH}(EXPR[], 0, Variable[], "") : nothing), ps
+        return (cont ? EXPR{FileH}(EXPR[], 0, "") : nothing), ps
     end
     last_line = 0
     curr_line = 0
 
     if cont
-        top = EXPR{FileH}(EXPR[], 0, 1:0, Variable[], "")
+        top = EXPR{FileH}(EXPR[], 0, 1:0, "")
         if ps.nt.kind == Tokens.WHITESPACE || ps.nt.kind == Tokens.COMMENT
             next(ps)
-            push!(top, EXPR{LITERAL{nothing}}(EXPR[], ps.nt.startbyte, 1:ps.nt.startbyte, Variable[], "comments"))
+            push!(top, EXPR{LITERAL{nothing}}(EXPR[], ps.nt.startbyte, 1:ps.nt.startbyte, "comments"))
         end
 
         while !ps.done && !ps.errored
@@ -276,7 +276,7 @@ function parse(ps::ParseState, cont = false)
             if curr_line == last_line && last(top.args) isa EXPR{TopLevel}
                 push!(last(top.args), ret)
             elseif ps.ws.kind == SemiColonWS
-                push!(top, EXPR{TopLevel}(EXPR[ret], Variable[], ""))
+                push!(top, EXPR{TopLevel}(EXPR[ret], ""))
             else
                 push!(top, ret)
             end
@@ -285,12 +285,12 @@ function parse(ps::ParseState, cont = false)
     else
         if ps.nt.kind == Tokens.WHITESPACE || ps.nt.kind == Tokens.COMMENT
             next(ps)
-            top = EXPR{LITERAL{nothing}}(EXPR[], ps.nt.startbyte, 1:ps.nt.startbyte, Variable[], "comments")
+            top = EXPR{LITERAL{nothing}}(EXPR[], ps.nt.startbyte, 1:ps.nt.startbyte, "comments")
         else
             top = parse_doc(ps)
             last_line = ps.nt.startpos[1]
             if ps.ws.kind == SemiColonWS
-                top = EXPR{TopLevel}(EXPR[top], Variable[], "")
+                top = EXPR{TopLevel}(EXPR[top], "")
                 while ps.ws.kind == SemiColonWS && ps.nt.startpos[1] == last_line && ps.nt.kind != Tokens.ENDMARKER
                     ret = parse_doc(ps)
                     push!(top, ret)

@@ -14,13 +14,13 @@ function parse_tuple(ps::ParseState, ret)
         if ret isa EXPR{TupleH}
             push!(ret, op)
         else
-            ret =  EXPR{TupleH}(EXPR[ret, op], Variable[], "")
+            ret =  EXPR{TupleH}(EXPR[ret, op], "")
         end
     elseif closer(ps)
         if ret isa EXPR{TupleH}  #(length(ret.punctuation) == 0 || !(first(ret.args) isa PUNCTUATION{Tokens.LPAREN}))
             push!(ret, op)
         else
-            ret = EXPR{TupleH}(EXPR[ret, op], Variable[], "")
+            ret = EXPR{TupleH}(EXPR[ret, op], "")
         end
     else
         @catcherror ps nextarg = @closer ps tuple parse_expression(ps)
@@ -28,7 +28,7 @@ function parse_tuple(ps::ParseState, ret)
             push!(ret, op)
             push!(ret, nextarg)
         else
-            ret = EXPR{TupleH}(EXPR[ret, op, nextarg], Variable[], "")
+            ret = EXPR{TupleH}(EXPR[ret, op, nextarg], "")
         end
     end
     return ret

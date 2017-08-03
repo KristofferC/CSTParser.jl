@@ -7,7 +7,7 @@ seperated list.
 function parse_curly(ps::ParseState, ret)
     next(ps)
     format_lbracket(ps)
-    ret = EXPR{Curly}(EXPR[ret, INSTANCE(ps)], Variable[], "")
+    ret = EXPR{Curly}(EXPR[ret, INSTANCE(ps)], "")
 
     @catcherror ps  @default ps @nocloser ps inwhere @closer ps brace parse_comma_sep(ps, ret, true, false, false)
     next(ps)
@@ -18,7 +18,7 @@ end
 
 function parse_cell1d(ps::ParseState)
     format_lbracket(ps)
-    ret = EXPR{Cell1d}(EXPR[INSTANCE(ps)], Variable[], "")
+    ret = EXPR{Cell1d}(EXPR[INSTANCE(ps)], "")
     @catcherror ps @default ps @closer ps brace parse_comma_sep(ps, ret, true, false, false)
     next(ps)
     push!(ret, INSTANCE(ps))

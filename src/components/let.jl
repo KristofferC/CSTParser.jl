@@ -1,6 +1,6 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.LET}})
     # Parsing
-    ret = EXPR{Let}(EXPR[INSTANCE(ps)], Variable[], "")
+    ret = EXPR{Let}(EXPR[INSTANCE(ps)], "")
     format_kw(ps)
 
     @default ps @closer ps comma @closer ps block while !closer(ps)
@@ -12,7 +12,7 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.LET}})
             format_comma(ps)
         end
     end
-    block = EXPR{Block}(EXPR[], 0, 1:0, Variable[], "")
+    block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
 
     # Construction

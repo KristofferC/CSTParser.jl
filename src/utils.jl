@@ -181,7 +181,7 @@ macro catcherror(ps, body)
     quote
         $(esc(body))
         if $(esc(ps)).errored
-            return EXPR{ERROR}(EXPR[INSTANCE($(esc(ps)))], 0, 0:-1, Variable[], "Unknown error")
+            return EXPR{ERROR}(EXPR[INSTANCE($(esc(ps)))], 0, 0:-1, "Unknown error")
         end
     end
 end
