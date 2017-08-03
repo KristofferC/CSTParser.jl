@@ -1,58 +1,43 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.ABSTRACT}})
     # Switch for v0.6 compatability
     if ps.nt.kind == Tokens.TYPE
-        # Parsing
         kw1 = INSTANCE(ps)
-        format_kw(ps)
         next(ps)
         kw2 = INSTANCE(ps)
-        format_kw(ps)
 
         @catcherror ps sig = @default ps @closer ps block parse_expression(ps)
 
-        # Construction
         next(ps)
         ret = EXPR{Abstract}(EXPR[kw1, kw2, sig, INSTANCE(ps)], "")
     else
-        # Parsing
         kw = INSTANCE(ps)
         @catcherror ps sig = @default ps parse_expression(ps)
 
-        # Construction
         ret = EXPR{Abstract}(EXPR[kw, sig], "")
     end
     return ret
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.BITSTYPE}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
 
     @catcherror ps arg1 = @default ps @closer ps ws @closer ps wsop parse_expression(ps)
     @catcherror ps arg2 = @default ps parse_expression(ps)
 
-    # Construction
     ret = EXPR{Bitstype}(EXPR[kw, arg1, arg2], "")
-
     return ret
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.PRIMITIVE}})
     if ps.nt.kind == Tokens.TYPE
-        # Parsing
         kw1 = INSTANCE(ps)
-        format_kw(ps)
         next(ps)
         kw2 = INSTANCE(ps)
-        format_kw(ps)
         @catcherror ps sig = @default ps @closer ps ws @closer ps wsop parse_expression(ps)
         @catcherror ps arg = @default ps @closer ps block parse_expression(ps)
 
-        # Construction
         next(ps)
         ret = EXPR{Primitive}(EXPR[kw1, kw2, sig, arg, INSTANCE(ps)], "")
-
     else
         ret = EXPR{IDENTIFIER}(EXPR[], "primitive")
     end
@@ -60,9 +45,7 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.PRIMITIVE}})
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.TYPEALIAS}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
 
     @catcherror ps arg1 = @closer ps ws @closer ps wsop parse_expression(ps)
     @catcherror ps arg2 = parse_expression(ps)
@@ -79,7 +62,6 @@ parse_kw(ps::ParseState, ::Type{Val{Tokens.STRUCT}}) = parse_struct(ps, FALSE)
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.MUTABLE}})
     if ps.nt.kind == Tokens.STRUCT
         kw = INSTANCE(ps)
-        format_kw(ps)
         next(ps)
         @catcherror ps ret = parse_struct(ps, TRUE)
         unshift!(ret, kw)
@@ -91,9 +73,7 @@ end
 
 
 function parse_struct(ps::ParseState, mutable)
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps sig = @default ps @closer ps block @closer ps ws parse_expression(ps)
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
@@ -102,6 +82,5 @@ function parse_struct(ps::ParseState, mutable)
     T = mutable == TRUE ? Tokens.TYPE : Tokens.IMMUTABLE
     next(ps)
     ret = EXPR{mutable == TRUE ? Mutable : Struct}(EXPR[kw, sig, block, INSTANCE(ps)], "")
-
     return ret
 end

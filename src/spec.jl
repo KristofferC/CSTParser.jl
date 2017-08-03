@@ -23,8 +23,8 @@ function update_span!(x::EXPR)
     x.span = first(first(x.args).span):(x.fullspan - last(x.args).fullspan + last(last(x.args).span))
 end
 
-function EXPR{T}(args::Vector, defs::Vector, val::String) where {T}
-    ret = EXPR{T}(args, 0, 1:0, defs, val)
+function EXPR{T}(args::Vector, val::String) where {T}
+    ret = EXPR{T}(args, 0, 1:0, val)
     update_span!(ret)
     ret
 end

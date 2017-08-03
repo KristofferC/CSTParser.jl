@@ -2,7 +2,6 @@ function parse_do(ps::ParseState, ret)
     # Parsing
     next(ps)
     kw = INSTANCE(ps)
-    format_kw(ps)
 
     args = EXPR{TupleH}(EXPR[], "")
     @default ps @closer ps comma @closer ps block while !closer(ps)
@@ -11,7 +10,6 @@ function parse_do(ps::ParseState, ret)
         push!(args, a)
         if ps.nt.kind == Tokens.COMMA
             next(ps)
-            format_comma(ps)
             push!(args, INSTANCE(ps))
         end
     end

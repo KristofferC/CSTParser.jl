@@ -8,12 +8,10 @@ Having hit '[' return either:
 """
 function parse_array(ps::ParseState)
     args = EXPR[INSTANCE(ps)]
-    format_lbracket(ps)
 
     if ps.nt.kind == Tokens.RSQUARE
         next(ps)
         push!(args, INSTANCE(ps))
-        format_rbracket(ps)
 
         return EXPR{Vect}(args, "")
     else
@@ -23,7 +21,6 @@ function parse_array(ps::ParseState)
             if first_arg isa EXPR{Generator} || first_arg isa EXPR{Flatten}
                 next(ps)
                 push!(args, INSTANCE(ps))
-                format_rbracket(ps)
 
                 if first_arg.args[1] isa EXPR{BinaryOpCall} && first_arg.args[2] isa EXPR{OPERATOR{AssignmentOp,Tokens.PAIR_ARROW,false}}
                     return EXPR{DictComprehension}(EXPR[args[1], first_arg, INSTANCE(ps)], "")
@@ -34,14 +31,12 @@ function parse_array(ps::ParseState)
                 next(ps)
                 push!(args, first_arg)
                 push!(args, INSTANCE(ps))
-                format_rbracket(ps)
 
                 return EXPR{Vcat}(args, "")
             else
                 next(ps)
                 push!(args, first_arg)
                 push!(args, INSTANCE(ps))
-                format_rbracket(ps)
 
                 ret = EXPR{Vect}(args, "")
             end
@@ -50,7 +45,6 @@ function parse_array(ps::ParseState)
             push!(ret, first_arg)
             next(ps)
             push!(ret, INSTANCE(ps))
-            format_comma(ps)
             @catcherror ps @default ps @closer ps square parse_comma_sep(ps, ret, false)
 
 
@@ -64,7 +58,6 @@ function parse_array(ps::ParseState)
             end
             next(ps)
             push!(ret, INSTANCE(ps))
-            format_rbracket(ps)
 
             return ret
         elseif ps.ws.kind == NewLineWS
@@ -76,7 +69,6 @@ function parse_array(ps::ParseState)
             end
             next(ps)
             push!(ret, INSTANCE(ps))
-            format_rbracket(ps)
 
             return ret
         elseif ps.ws.kind == WS || ps.ws.kind == SemiColonWS

@@ -1,7 +1,6 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.FOR}})
     # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps ranges = @default ps parse_ranges(ps)
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
@@ -20,7 +19,6 @@ function parse_ranges(ps::ParseState)
         while ps.nt.kind == Tokens.COMMA
             next(ps)
             push!(arg, INSTANCE(ps))
-            format_comma(ps)
 
             @catcherror ps nextarg = @closer ps comma @closer ps ws parse_expression(ps)
             push!(arg, nextarg)
@@ -34,7 +32,6 @@ end
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.WHILE}})
     # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps cond = @default ps @closer ps ws parse_expression(ps)
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)

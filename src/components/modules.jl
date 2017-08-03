@@ -8,7 +8,6 @@ parse_kw(ps::ParseState, ::Type{Val{Tokens.BAREMODULE}}) = parse_module(ps)
 function parse_module(ps::ParseState)
     # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     if ps.nt.kind == Tokens.IDENTIFIER
         next(ps)
         arg = INSTANCE(ps)
@@ -101,7 +100,6 @@ function parse_imports(ps::ParseState)
     kwt = kw isa EXPR{KEYWORD{Tokens.IMPORT}} ? Import :
           kw isa EXPR{KEYWORD{Tokens.IMPORTALL}} ? ImportAll :
           Using
-    format_kw(ps)
     tk = ps.t.kind
 
     arg = parse_dot_mod(ps)
@@ -140,7 +138,6 @@ end
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.EXPORT}})
     # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     ret = EXPR{Export}(EXPR[kw; parse_dot_mod(ps)], "")
 
     while ps.nt.kind == Tokens.COMMA

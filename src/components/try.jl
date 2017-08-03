@@ -1,7 +1,5 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     ret = EXPR{Try}(EXPR[kw], "")
 
     tryblock = EXPR{Block}(EXPR[], 0, 1:0, "")

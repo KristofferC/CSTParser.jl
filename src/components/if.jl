@@ -8,7 +8,6 @@ Parse an `if` block.
 function parse_if(ps::ParseState, nested = false)
     # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps cond = @default ps @closer ps block @closer ps ws parse_expression(ps)
 
     ifblock = EXPR{Block}(EXPR[], 0, 1:0, "")

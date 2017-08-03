@@ -1,56 +1,32 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.CONST}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps arg = @default ps parse_expression(ps)
 
-    # Construction
     ret = EXPR{Const}(EXPR[kw, arg], "")
-
     return ret
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.GLOBAL}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps arg = parse_expression(ps)
 
-    # Construction
-    # if arg isa EXPR{TupleH} && first(arg.punctuation) isa PUNCTUATION{Tokens.COMMA}
-    #     ret = EXPR(Global, [kw, arg.args...], ps.nt.startbyte - startbyte, arg.punctuation)
-    # else
     ret = EXPR{Global}(EXPR[kw, arg], "")
-    # end
-
     return ret
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.LOCAL}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps arg = @default ps parse_expression(ps)
 
-    # Construction
-    # if arg isa EXPR && arg.head == TUPLE && first(arg.punctuation) isa PUNCTUATION{Tokens.COMMA}
-    #     ret = EXPR(Local, [kw, arg.args...], ps.nt.startbyte - startbyte, arg.punctuation)
-    # else
     ret = EXPR{Local}(EXPR[kw, arg], "")
-    # end
-
     return ret
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.RETURN}})
-    # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     @catcherror ps args = @default ps closer(ps) ? NOTHING : parse_expression(ps)
 
-    # Construction
     ret = EXPR{Return}(EXPR[kw, args], "")
-
     return ret
 end
 

@@ -135,7 +135,6 @@ function parse_compound(ps::ParseState, ret)
     elseif isoperator(ps.nt)
         next(ps)
         op = INSTANCE(ps)
-        format_op(ps, precedence(ps.t))
         ret = parse_operator(ps, ret, op)
     elseif (ret isa EXPR{IDENTIFIER} || (ret isa EXPR{BinarySyntaxOpCall} && ret.args[2] isa EXPR{OPERATOR{DotOp,Tokens.DOT,false}})) && (ps.nt.kind == Tokens.STRING || ps.nt.kind == Tokens.TRIPLE_STRING)
         next(ps)
@@ -194,7 +193,6 @@ Parses an expression starting with a `(`.
 """
 function parse_paren(ps::ParseState)
     ret = EXPR{TupleH}(EXPR[INSTANCE(ps)], "")
-    format_lbracket(ps)
 
     @catcherror ps @default ps @nocloser ps inwhere @closer ps paren parse_comma_sep(ps, ret, false, true)
 
@@ -208,8 +206,6 @@ function parse_paren(ps::ParseState)
     # handle closing ')'
     next(ps)
     push!(ret, INSTANCE(ps))
-    format_rbracket(ps)
-
     return ret
 end
 

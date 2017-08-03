@@ -1,7 +1,6 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.FUNCTION}})
     # Parsing
     kw = INSTANCE(ps)
-    format_kw(ps)
     # signature
 
     if isoperator(ps.nt.kind) && ps.nt.kind != Tokens.EX_OR && ps.nnt.kind == Tokens.LPAREN
@@ -121,11 +120,9 @@ end
 function parse_call(ps::ParseState, ret)
     next(ps)
     ret = EXPR{Call}(EXPR[ret, INSTANCE(ps)], "")
-    format_lbracket(ps)
     @default ps @closer ps paren parse_comma_sep(ps, ret)
     next(ps)
     push!(ret, INSTANCE(ps))
-    format_rbracket(ps)
     return ret
 end
 
@@ -142,11 +139,6 @@ function parse_comma_sep(ps::ParseState, ret::EXPR, kw = true, block = false, fo
         if ps.nt.kind == Tokens.COMMA
             next(ps)
             push!(ret, INSTANCE(ps))
-            if formatcomma
-                format_comma(ps)
-            else
-                format_no_rws(ps)
-            end
         end
         if ps.ws.kind == SemiColonWS
             break
@@ -175,7 +167,6 @@ function parse_comma_sep(ps::ParseState, ret::EXPR, kw = true, block = false, fo
                 if ps.nt.kind == Tokens.COMMA
                     next(ps)
                     push!(paras, INSTANCE(ps))
-                    format_comma(ps)
                 end
             end
             push!(ret, paras)

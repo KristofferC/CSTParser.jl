@@ -1,6 +1,5 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.MACRO}})
     kw = INSTANCE(ps)
-    format_kw(ps)
     if ps.nt.kind == Tokens.IDENTIFIER
         next(ps)
         sig = INSTANCE(ps)
