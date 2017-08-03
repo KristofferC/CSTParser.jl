@@ -526,18 +526,6 @@ function get_last_token(x::CSTParser.EXPR)
     end
 end
 
-function trailing_ws_length(x::CSTParser.EXPR{CSTParser.IDENTIFIER})
-    x.span - sizeof(x.val)
-end
-
-function trailing_ws_length(x::CSTParser.EXPR{P}) where P <: CSTParser.PUNCTUATION
-    x.span - 1
-end
-
-function trailing_ws_length(x::CSTParser.EXPR{K}) where K <: CSTParser.KEYWORD{T} where T
-    x.span - sizeof(string(T))
-end
-
-function trailing_ws_length(x::CSTParser.EXPR{K}) where K <: CSTParser.LITERAL{T} where T
-    x.span - sizeof(x.val)
+function trailing_ws_length(x::CSTParser.EXPR)
+    x.fullspan - length(x.span)
 end
