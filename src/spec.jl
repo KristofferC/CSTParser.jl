@@ -100,7 +100,7 @@ function INSTANCE(ps::ParseState)
         isoperator(ps.t) ? OPERATOR(ps) :
         ispunctuation(ps.t) ? PUNCTUATION(ps) :
         ps.t.kind == Tokens.SEMICOLON ? PUNCTUATION(ps) :
-        (ps.errored = true; EXPR{ERROR}(EXPR[], span, ""))
+        (ps.errored = true; EXPR{ERROR}(EXPR[], ""))
 end
 
 
@@ -125,7 +125,7 @@ mutable struct File
     ast::EXPR
     errors
 end
-File(path::String) = File([], [], path, EXPR{FileH}(EXPR[], 0, ""), [])
+File(path::String) = File([], [], path, EXPR{FileH}(EXPR[], ""), [])
 
 mutable struct Project
     path::String

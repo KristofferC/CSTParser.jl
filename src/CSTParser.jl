@@ -218,7 +218,7 @@ function parse(str::String, cont = false)
     ps = ParseState(str)
     x, ps = parse(ps, cont)
     if ps.errored
-        x = EXPR{ERROR}(EXPR[], 0, "Unknown error")
+        x = EXPR{ERROR}(EXPR[], "Unknown error")
     end
     return x
 end
@@ -252,13 +252,13 @@ end
 
 function parse(ps::ParseState, cont = false)
     if ps.l.io.size == 0
-        return (cont ? EXPR{FileH}(EXPR[], 0, "") : nothing), ps
+        return (cont ? EXPR{FileH}(EXPR[], "") : nothing), ps
     end
     last_line = 0
     curr_line = 0
 
     if cont
-        top = EXPR{FileH}(EXPR[], 0, 1:0, "")
+        top = EXPR{FileH}(EXPR[], "")
         if ps.nt.kind == Tokens.WHITESPACE || ps.nt.kind == Tokens.COMMENT
             next(ps)
             push!(top, EXPR{LITERAL{nothing}}(EXPR[], ps.nt.startbyte, 1:ps.nt.startbyte, "comments"))

@@ -92,49 +92,49 @@ function error_unexpected(ps, startbyte, tok)
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedInputEnd}(
             tok.startbyte:tok.endbyte, [], "Unexpected end of input"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected end of input")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected end of input")
     elseif tok.kind == Tokens.COMMA
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedComma}(
             tok.startbyte:tok.endbyte, [], "Unexpected comma"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected comma")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected comma")
     elseif tok.kind == Tokens.LPAREN
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedLParen}(
             tok.startbyte:tok.endbyte, [], "Unexpected ("
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected (")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected (")
     elseif tok.kind == Tokens.RPAREN
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedRParen}(
             tok.startbyte:tok.endbyte, [], "Unexpected )"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected )")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected )")
     elseif tok.kind == Tokens.LBRACE
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedLBrace}(
             tok.startbyte:tok.endbyte, [], "Unexpected {"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected {")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected {")
     elseif tok.kind == Tokens.RBRACE
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedRBrace}(
             tok.startbyte:tok.endbyte, [], "Unexpected }"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected }")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected }")
     elseif tok.kind == Tokens.LSQUARE
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedLSquare}(
             tok.startbyte:tok.endbyte, [], "Unexpected ["
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected [")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected [")
     elseif tok.kind == Tokens.RSQUARE
         ps.errored = true
         push!(ps.diagnostics, Diagnostic{Diagnostics.UnexpectedRSquare}(
             tok.startbyte:tok.endbyte, [], "Unexpected ]"
         ))
-        return EXPR{ERROR}(EXPR[INSTANCE(ps)], 0, "Unexpected ]")
+        return EXPR{ERROR}(EXPR[INSTANCE(ps)], "Unexpected ]")
     else
         error("Internal error")
     end

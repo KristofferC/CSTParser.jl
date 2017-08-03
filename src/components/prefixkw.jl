@@ -42,23 +42,23 @@ end
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.ELSE}})
     ret = EXPR{IDENTIFIER}(EXPR[], ps.nt.startbyte - ps.t.startbyte, 1 + (0:ps.t.endbyte-ps.t.startbyte), "else")
     ps.errored = true
-    return EXPR{ERROR}(EXPR[], 0, "incorrect use of else")
+    return EXPR{ERROR}(EXPR[], "incorrect use of else")
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.ELSEIF}})
     ret = EXPR{IDENTIFIER}(EXPR[], ps.nt.startbyte - ps.t.startbyte, 1 + (0:ps.t.endbyte-ps.t.startbyte), "elseif")
     ps.errored = true
-    return EXPR{ERROR}(EXPR[], 0, "incorrect use of else")
+    return EXPR{ERROR}(EXPR[], "incorrect use of else")
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.CATCH}})
     ret = EXPR{IDENTIFIER}(EXPR[], ps.nt.startbyte - ps.t.startbyte, 1 + (0:ps.t.endbyte-ps.t.startbyte), "catch")
     ps.errored = true
-    return EXPR{ERROR}(EXPR[], 0, "incorrect use of catch")
+    return EXPR{ERROR}(EXPR[], "incorrect use of catch")
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.FINALLY}})
     ret = IDENTIFIER(ps.nt.startbyte - ps.t.startbyte, :finally)
     ps.errored = true
-    return EXPR{ERROR}(EXPR[], 0, "incorrect use of finally")
+    return EXPR{ERROR}(EXPR[], "incorrect use of finally")
 end
