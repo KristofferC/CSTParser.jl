@@ -185,7 +185,7 @@ function parse_unary(ps::ParseState, op::EXPR{OPERATOR{P,K,dot}}) where {P, K, d
     if issyntaxunarycall(op)
         ret = EXPR{UnarySyntaxOpCall}(EXPR[op, arg], "")
     else
-        ret = EXPR{Call}(EXPR[op, arg], "")
+        ret = EXPR{UnaryOpCall}(EXPR[op, arg], "")
     end
     return ret
 end
