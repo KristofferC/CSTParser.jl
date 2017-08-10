@@ -2,28 +2,22 @@ parse_kw(ps::ParseState, ::Type{Val{Tokens.IMPORT}}) = parse_imports(ps)
 parse_kw(ps::ParseState, ::Type{Val{Tokens.IMPORTALL}}) = parse_imports(ps)
 parse_kw(ps::ParseState, ::Type{Val{Tokens.USING}}) = parse_imports(ps)
 
-parse_kw(ps::ParseState, ::Type{Val{Tokens.MODULE}}) = parse_module(ps)
-parse_kw(ps::ParseState, ::Type{Val{Tokens.BAREMODULE}}) = parse_module(ps)
-
-function parse_module(ps::ParseState)
-    # Parsing
-    kw = INSTANCE(ps)
+function parse_kw(ps::ParseState, ::Type{T}) where T <:Union{Val{Tokens.MODULE},Val{Tokens.BAREMODULE}}
+    ret = EXPR{T == Val{Tokens.MODULE} ? ModuleH : BareModule}(EXPR[INSTANCE(ps)], "")
     if ps.nt.kind == Tokens.IDENTIFIER
-        next(ps)
-        arg = INSTANCE(ps)
+        arg = INSTANCE(next(ps))
     else
         @catcherror ps arg = @precedence ps 15 @closer ps block @closer ps ws parse_expression(ps)
     end
-
-    block = EXPR{Block}(EXPR[], "")
-    @default ps while ps.nt.kind !== Tokens.END
-        @catcherror ps a = @closer ps block parse_doc(ps)
-        push!(block, a)
+    push!(ret, arg)
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
     end
 
-    # Construction
-    next(ps)
-    ret = EXPR{(kw isa EXPR{KEYWORD{Tokens.MODULE}} ? ModuleH : BareModule)}(EXPR[kw, arg, block, INSTANCE(ps)], "")
+    block = EXPR{Block}(EXPR[], "")
+    parse_block(ps::ParseState, block, Tokens.Kind[Tokens.END], true)
+    push!(ret, block)
+    push!(ret, INSTANCE(next(ps)))
     return ret
 end
 

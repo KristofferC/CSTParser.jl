@@ -308,10 +308,15 @@ function Expr(x::EXPR{UnaryOpCall})
     return Expr(:call, Expr(x.args[1]), Expr(x.args[2]))
 end
 
-
-Expr(x::EXPR{Struct}) = Expr(:type, false, Expr(x.args[2]), Expr(x.args[3]))
-
-Expr(x::EXPR{Mutable}) = length(x.args) == 4 ? Expr(:type, true, Expr(x.args[2]), Expr(x.args[3])) : Expr(:type, true, Expr(x.args[3]), Expr(x.args[4]))
+function Expr(x::EXPR{T}) where T <: Union{Struct,Mutable}
+    ret = Expr(:type, T == Mutable)
+    for a in x.args
+        if !(a isa EXPR{<:PUNCTUATION} || a isa EXPR{<:KEYWORD})
+            push!(ret.args, Expr(a))
+        end
+    end
+    return ret
+end
 
 Expr(x::EXPR{Abstract}) = length(x.args) == 2 ? Expr(:abstract, Expr(x.args[2])) : Expr(:abstract, Expr(x.args[3]))
 Expr(x::EXPR{Bitstype}) = Expr(:bitstype, Expr(x.args[2]), Expr(x.args[3]))
@@ -365,6 +370,8 @@ end
 function Expr(x::EXPR{Quote})
     if x.args[2] isa EXPR{InvisBrackets} && (x.args[2].args[2] isa EXPR{OP} where OP <: OPERATOR || x.args[2].args[2] isa EXPR{L} where L <: LITERAL || x.args[2].args[2] isa EXPR{IDENTIFIER})
         return QuoteNode(Expr(x.args[2]))
+    elseif x.args[2] isa EXPR{TupleH}
+        return Expr(:quote, Expr(x.args[2]))
     else
         for a in x.args
             if a isa EXPR{Block}
@@ -378,7 +385,7 @@ end
 function Expr(x::EXPR{If})
     ret = Expr(:if)
     for a in x.args
-        if !(a isa EXPR{P} where P <: PUNCTUATION || a isa EXPR{K} where K <: KEYWORD)
+        if !(a isa EXPR{<:PUNCTUATION} || a isa EXPR{<:KEYWORD})
             push!(ret.args, Expr(a))
         end
     end
@@ -388,7 +395,17 @@ end
 function Expr(x::EXPR{FunctionDef})
     ret = Expr(:function)
     for a in x.args
-        if !(a isa EXPR{P} where P <: PUNCTUATION || a isa EXPR{K} where K <: KEYWORD)
+        if !(a isa EXPR{<:PUNCTUATION}|| a isa EXPR{<:KEYWORD})
+            push!(ret.args, Expr(a))
+        end
+    end
+    ret
+end
+
+function Expr(x::EXPR{Macro})
+    ret = Expr(:macro)
+    for a in x.args
+        if !(a isa EXPR{<:PUNCTUATION}|| a isa EXPR{<:KEYWORD})
             push!(ret.args, Expr(a))
         end
     end
@@ -398,7 +415,7 @@ end
 function Expr(x::EXPR{Try})
     ret = Expr(:try)
     for a in x.args
-        if !(a isa EXPR{P} where P <: PUNCTUATION || a isa EXPR{K} where K <: KEYWORD)
+        if !(a isa EXPR{<:PUNCTUATION}|| a isa EXPR{<:KEYWORD})
             push!(ret.args, Expr(a))
         end
     end
@@ -418,7 +435,13 @@ end
 
 function Expr(x::EXPR{Do})
     ret = Expr(x.args[1])
-    insert!(ret.args, 2, Expr(:->, Expr(x.args[3]), Expr(x.args[4])))
+    func = Expr(:->)
+    for i = 2:length(x.args)
+        if !(x.args[i] isa EXPR{P} where P <: PUNCTUATION || x.args[i] isa EXPR{P} where P <: KEYWORD)
+            push!(func.args, Expr(x.args[i]))
+        end
+    end
+    insert!(ret.args, 2, func)
     ret
 end
 
@@ -444,7 +467,11 @@ function Expr(x::EXPR{For})
     else
         push!(ret.args, fix_range(x.args[2]))
     end
-    push!(ret.args, Expr(x.args[3]))
+    for i = 3:length(x.args)
+        if x.args[i] isa EXPR{Block}
+            push!(ret.args, Expr(x.args[i]))
+        end
+    end
     ret
 end
 
@@ -539,10 +566,6 @@ function Expr(x::EXPR{Vect})
         end
     end
     ret
-end
-
-function Expr(x::EXPR{Macro})
-    Expr(:macro, Expr(x.args[2]), Expr(x.args[3]))
 end
 
 Expr(x::EXPR{GlobalRefDoc}) = GlobalRef(Core, Symbol("@doc"))
@@ -687,11 +710,16 @@ function Expr(x::EXPR{Export})
     ret
 end
 
-Expr(x::EXPR{ModuleH}) = Expr(:module, true, Expr(x.args[2]), Expr(x.args[3]))
-Expr(x::EXPR{BareModule}) = Expr(:module, false, Expr(x.args[2]), Expr(x.args[3]))
-
-
-
+function Expr(x::EXPR{T}) where T <: Union{ModuleH,BareModule}
+    ret = Expr(:module, T == ModuleH)
+    for i = 2:length(x.args)
+        a = x.args[i]
+        if !(a isa EXPR{<:PUNCTUATION} || a isa EXPR{<:KEYWORD})
+            push!(ret.args, Expr(a))
+        end
+    end
+    ret
+end
 
 function _get_import_block(x, i, ret)
     while x.args[i + 1] isa EXPR{OPERATOR{DotOp,Tokens.DOT,false}}

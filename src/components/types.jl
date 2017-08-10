@@ -72,16 +72,17 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.MUTABLE}})
     return ret
 end
 
-
 function parse_struct(ps::ParseState, mutable)
-    kw = INSTANCE(ps)
+    ret = EXPR{mutable == TRUE ? Mutable : Struct}(EXPR[INSTANCE(ps)], "")
     @catcherror ps sig = @default ps @closer ps block @closer ps ws parse_expression(ps)
+    push!(ret, sig)
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
+    push!(ret, block)
 
-    # Construction
-    T = mutable == TRUE ? Tokens.TYPE : Tokens.IMMUTABLE
-    next(ps)
-    ret = EXPR{mutable == TRUE ? Mutable : Struct}(EXPR[kw, sig, block, INSTANCE(ps)], "")
+    push!(ret, INSTANCE(next(ps)))
     return ret
 end

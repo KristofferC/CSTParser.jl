@@ -1,28 +1,25 @@
 function parse_do(ps::ParseState, ret)
-    # Parsing
-    next(ps)
-    kw = INSTANCE(ps)
+    ret = EXPR{Do}(EXPR[ret, INSTANCE(next(ps))], "")
 
     args = EXPR{TupleH}(EXPR[], "")
     @default ps @closer ps comma @closer ps block while !closer(ps)
         @catcherror ps a = parse_expression(ps)
-
         push!(args, a)
         if ps.nt.kind == Tokens.COMMA
             next(ps)
             push!(args, INSTANCE(ps))
         end
     end
+    push!(ret, args)
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret.args, INSTANCE(next(ps)))
+    end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
-
-    # Construction
-    ret = EXPR{Do}(EXPR[ret, kw], "")
-    push!(ret, args)
     push!(ret, block)
-    next(ps)
-    push!(ret, INSTANCE(ps))
 
+    push!(ret, INSTANCE(next(ps)))
+    update_span!(ret)
     return ret
 end
 
@@ -34,18 +31,20 @@ parse_kw(ps::ParseState, ::Type{Val{Tokens.IF}}) = parse_if(ps)
 Parse an `if` block.
 """
 function parse_if(ps::ParseState, nested = false)
-    # Parsing
-    kw = INSTANCE(ps)
+    if nested
+        ret = EXPR{If}(EXPR[], "")
+    else
+        ret = EXPR{If}(EXPR[INSTANCE(ps)], "")
+    end
     @catcherror ps cond = @default ps @closer ps block @closer ps ws parse_expression(ps)
+    push!(ret, cond)
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
 
     ifblock = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps @closer ps ifelse parse_block(ps, ifblock, Tokens.Kind[Tokens.END, Tokens.ELSE, Tokens.ELSEIF])
-
-    if nested
-        ret = EXPR{If}(EXPR[cond, ifblock], "")
-    else
-        ret = EXPR{If}(EXPR[kw, cond, ifblock], "")
-    end
+    push!(ret, ifblock)
 
     elseblock = EXPR{Block}(EXPR[], 0, 1:0, "")
     if ps.nt.kind == Tokens.ELSEIF
@@ -58,6 +57,9 @@ function parse_if(ps::ParseState, nested = false)
     if ps.nt.kind == Tokens.ELSE
         next(ps)
         push!(ret, INSTANCE(ps))
+        if ps.nt.kind == Tokens.SEMICOLON
+            push!(ret, INSTANCE(next(ps)))
+        end
         @catcherror ps @default ps parse_block(ps, elseblock)
     end
 
@@ -72,7 +74,6 @@ function parse_if(ps::ParseState, nested = false)
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.LET}})
-    # Parsing
     ret = EXPR{Let}(EXPR[INSTANCE(ps)], "")
 
     @default ps @closer ps comma @closer ps block while !closer(ps)
@@ -83,20 +84,23 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.LET}})
             push!(ret, INSTANCE(ps))
         end
     end
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
-
-    # Construction
     push!(ret, block)
-    next(ps)
-    push!(ret, INSTANCE(ps))
 
+    push!(ret, INSTANCE(next(ps)))
     return ret
 end
 
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
     kw = INSTANCE(ps)
     ret = EXPR{Try}(EXPR[kw], "")
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
 
     tryblock = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps @closer ps trycatch parse_block(ps, tryblock,)
@@ -114,18 +118,22 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
     #  catch block
     if ps.nt.kind == Tokens.CATCH
         next(ps)
+        push!(ret, INSTANCE(ps))
+        if ps.nt.kind == Tokens.SEMICOLON
+            push!(ret, INSTANCE(next(ps)))
+        end
         # catch closing early
         if ps.nt.kind == Tokens.FINALLY || ps.nt.kind == Tokens.END
-            push!(ret, INSTANCE(ps))
             caught = FALSE
             catchblock = EXPR{Block}(EXPR[], 0, 1:0, "")
         else
-            start_col = ps.t.startpos[2] + 4
-            push!(ret, INSTANCE(ps))
-            if ps.nt.kind == Tokens.SEMICOLON || ps.ws.kind == NewLineWS
+            if ps.t.kind == Tokens.SEMICOLON || (ps.ws.kind == NewLineWS)
                 caught = FALSE
             else
                 @catcherror ps caught = @default ps @closer ps ws @closer ps trycatch parse_expression(ps)
+                if ps.nt.kind == Tokens.SEMICOLON
+                    push!(ret, INSTANCE(next(ps)))
+                end
             end
             catchblock = EXPR{Block}(EXPR[], 0, 1:0, "")
             @catcherror ps @default ps @closer ps trycatch parse_block(ps, catchblock)
@@ -138,7 +146,11 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
         caught = FALSE
         catchblock = EXPR{Block}(EXPR[], 0, 1:0, "")
     end
-    push!(ret, caught)
+    if last(ret.args) isa EXPR{PUNCTUATION{Tokens.SEMICOLON}}
+        insert!(ret.args, length(ret.args), caught)
+    else
+        push!(ret, caught)
+    end
     push!(ret, catchblock)
 
     # finally block
@@ -146,8 +158,10 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
         if isempty(catchblock.args)
             ret.args[4] = FALSE
         end
-        next(ps)
-        push!(ret, INSTANCE(ps))
+        push!(ret, INSTANCE(next(ps)))
+        if ps.nt.kind == Tokens.SEMICOLON
+            push!(ret, INSTANCE(next(ps)))
+        end
         finallyblock = EXPR{Block}(EXPR[], 0, 1:0, "")
         @catcherror ps parse_block(ps, finallyblock)
         push!(ret, finallyblock)
@@ -155,5 +169,6 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
 
     next(ps)
     push!(ret, INSTANCE(ps))
+    update_span!(ret)
     return ret
 end

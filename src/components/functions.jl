@@ -1,7 +1,5 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.FUNCTION}})
-    # Parsing
-    kw = INSTANCE(ps)
-    # signature
+    ret = EXPR{FunctionDef}(EXPR[INSTANCE(ps)], "")
 
     if isoperator(ps.nt.kind) && ps.nt.kind != Tokens.EX_OR && ps.nnt.kind == Tokens.LPAREN
         next(ps)
@@ -29,29 +27,20 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.FUNCTION}})
     if sig isa EXPR{InvisBrackets} && !(sig.args[2] isa EXPR{TupleH})
         sig = EXPR{TupleH}(sig.args, "")
     end
-
+    push!(ret, sig)
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
 
 
     # Construction
-    if isempty(block.args)
-        if sig isa EXPR{Call} || sig isa EXPR{BinarySyntaxOpCall} && !(sig.args[1] isa EXPR{OPERATOR{PlusOp,Tokens.EX_OR,false}})
-            args = EXPR[sig, block]
-        else
-            args = EXPR[sig]
-        end
+    if isempty(block.args) && !(sig isa EXPR{Call} || sig isa EXPR{BinarySyntaxOpCall} && !(sig.args[1] isa EXPR{OPERATOR{PlusOp,Tokens.EX_OR,false}}))
     else
-        args = EXPR[sig, block]
+        push!(ret, block)
     end
-
-    next(ps)
-
-    ret = EXPR{FunctionDef}(EXPR[kw], "")
-    for a in args
-        push!(ret, a)
-    end
-    push!(ret, INSTANCE(ps))
+    push!(ret, INSTANCE(next(ps)))
     return ret
 end
 
@@ -136,12 +125,10 @@ function parse_comma_sep(ps::ParseState, ret::EXPR, kw = true, block = false)
         end
         push!(ret, a)
         if ps.nt.kind == Tokens.COMMA
-            next(ps)
-            push!(ret, INSTANCE(ps))
+            push!(ret, INSTANCE(next(ps)))
         end
         if ps.nt.kind == Tokens.SEMICOLON
-            next(ps)
-            push!(ret, INSTANCE(ps))
+            push!(ret, INSTANCE(next(ps)))
             break
         end
     end

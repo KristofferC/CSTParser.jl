@@ -3,12 +3,13 @@ function parse_kw(ps::ParseState, ::Type{T}) where T <: Union{Val{Tokens.BEGIN},
     kw = INSTANCE(ps)
     ret = EXPR{T == Val{Tokens.BEGIN} ? Begin : Quote}(EXPR[kw], "")
     if ps.nt.kind == Tokens.SEMICOLON
-        push!(ret.args, INSTANCE(next(ps)))
+        push!(ret, INSTANCE(next(ps)))
     end
-    push!(ret.args, EXPR{Block}(EXPR[], 0, 1:0, ""))
-    @catcherror ps @default ps parse_block(ps, last(ret.args), Tokens.Kind[Tokens.END], true)
-
-    push!(ret.args, INSTANCE(next(ps)))
+    block = EXPR{Block}(EXPR[], 0, 1:0, "")
+    @catcherror ps @default ps parse_block(ps, block, Tokens.Kind[Tokens.END], true)
+    push!(ret, block)
+    
+    push!(ret, INSTANCE(next(ps)))
     return ret
 end
 

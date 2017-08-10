@@ -1,5 +1,5 @@
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.MACRO}})
-    kw = INSTANCE(ps)
+    ret = EXPR{Macro}(EXPR[INSTANCE(ps)], "")
     if ps.nt.kind == Tokens.IDENTIFIER
         next(ps)
         sig = INSTANCE(ps)
@@ -7,12 +7,16 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.MACRO}})
     else
         @catcherror ps sig = @closer ps block @closer ps ws parse_expression(ps)
     end
+    push!(ret, sig)
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
 
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
-
-    next(ps)
-    ret = EXPR{Macro}(EXPR[kw, sig, block, INSTANCE(ps)], "")
+    push!(ret, block)
+    push!(ret, INSTANCE(next(ps)))
+    
     return ret
 end
 

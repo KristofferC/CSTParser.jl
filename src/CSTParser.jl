@@ -191,15 +191,13 @@ function parse_paren(ps::ParseState)
     @catcherror ps @default ps @nocloser ps inwhere @closer ps paren parse_comma_sep(ps, ret, false, true)
 
     if length(ret.args) == 2 && !(ret.args[2] isa EXPR{UnarySyntaxOpCall} && ret.args[2].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
-
+        
         # if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
-        #     ret = EXPR{InvisBrackets}(ret.args, "")
+            ret = EXPR{InvisBrackets}(ret.args, "")
         # end
     end
 
-    # handle closing ')'
-    next(ps)
-    push!(ret, INSTANCE(ps))
+    push!(ret, INSTANCE(next(ps)))
     return ret
 end
 
