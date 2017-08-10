@@ -80,9 +80,6 @@ function parse_array(ps::ParseState)
             next(ps)
             push!(ret, INSTANCE(ps))
             @catcherror ps @default ps @closer ps square parse_comma_sep(ps, ret, false)
-
-
-
             if last(ret.args) isa EXPR{Parameters}
                 ret = EXPR{Vcat}(ret.args, "")
                 unshift!(ret, pop!(ret))
@@ -100,18 +97,20 @@ function parse_array(ps::ParseState)
             while ps.nt.kind != Tokens.RSQUARE
                 @catcherror ps a = @default ps @closer ps square parse_expression(ps)
                 push!(ret, a)
+                if ps.nt.kind == Tokens.SEMICOLON
+                    push!(ret, INSTANCE(next(ps)))
+                end
             end
-            next(ps)
-            push!(ret, INSTANCE(ps))
+            push!(ret, INSTANCE(next(ps)))
 
             return ret
-        elseif ps.ws.kind == WS || ps.ws.kind == SemiColonWS
+        elseif ps.ws.kind == WS || ps.nt.kind == Tokens.SEMICOLON
             first_row = EXPR{Hcat}(EXPR[first_arg], "")
-            while ps.nt.kind != Tokens.RSQUARE && ps.ws.kind != NewLineWS && ps.ws.kind != SemiColonWS
+            while ps.nt.kind != Tokens.RSQUARE && ps.ws.kind != NewLineWS && ps.nt.kind != Tokens.SEMICOLON
                 @catcherror ps a = @default ps @closer ps square @closer ps ws @closer ps wsop parse_expression(ps)
                 push!(first_row, a)
             end
-            if ps.nt.kind == Tokens.RSQUARE && ps.ws.kind != SemiColonWS
+            if ps.nt.kind == Tokens.RSQUARE && ps.nt.kind != Tokens.SEMICOLON
                 if length(first_row.args) == 1
                     first_row = EXPR{Vcat}(first_row.args, "")
                 end
@@ -126,16 +125,22 @@ function parse_array(ps::ParseState)
                     first_row = EXPR{Row}(first_row.args, "")
                 end
                 ret = EXPR{Vcat}(EXPR[args[1], first_row], "")
+                if ps.nt.kind == Tokens.SEMICOLON
+                    push!(ret, INSTANCE(next(ps)))
+                end
                 while ps.nt.kind != Tokens.RSQUARE
                     @catcherror ps first_arg = @default ps @closer ps square @closer ps ws @closer ps wsop parse_expression(ps)
                     push!(ret, EXPR{Row}(EXPR[first_arg], ""))
-                    while ps.nt.kind != Tokens.RSQUARE && ps.ws.kind != NewLineWS && ps.ws.kind != SemiColonWS
+                    while ps.nt.kind != Tokens.RSQUARE && ps.ws.kind != NewLineWS && ps.nt.kind != Tokens.SEMICOLON
                         @catcherror ps a = @default ps @closer ps square @closer ps ws @closer ps wsop parse_expression(ps)
                         push!(last(ret.args), a)
                     end
                     # if only one entry dont use :row
                     if length(last(ret.args).args) == 1
                         ret.args[end] = ret.args[end].args[1]
+                    end
+                    if ps.nt.kind == Tokens.SEMICOLON
+                        push!(ret, INSTANCE(next(ps)))
                     end
                     update_span!(ret)
                 end

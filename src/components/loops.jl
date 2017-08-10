@@ -3,14 +3,14 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.FOR}})
     
     ret = EXPR{For}(EXPR[INSTANCE(ps)], "")
     @catcherror ps ranges = @default ps parse_ranges(ps)
-    push!(ret.args, ranges)
+    push!(ret, ranges)
     if ps.nt.kind == Tokens.SEMICOLON
-        push!(ret.args, INSTANCE(next(ps)))
+        push!(ret, INSTANCE(next(ps)))
     end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
-    push!(ret.args, block)
-    push!(ret.args, INSTANCE(next(ps)))
+    push!(ret, block)
+    push!(ret, INSTANCE(next(ps)))
     update_span!(ret)
     return ret
 end
@@ -36,14 +36,14 @@ end
 function parse_kw(ps::ParseState, ::Type{Val{Tokens.WHILE}})
     ret = EXPR{While}(EXPR[INSTANCE(ps)], "")
     @catcherror ps cond = @default ps @closer ps ws parse_expression(ps)
-    push!(ret.args, cond)
+    push!(ret, cond)
     if ps.nt.kind == Tokens.SEMICOLON
-        push!(ret.args, INSTANCE(next(ps)))
+        push!(ret, INSTANCE(next(ps)))
     end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)
-    push!(ret.args, block)
-    push!(ret.args, INSTANCE(next(ps)))
+    push!(ret, block)
+    push!(ret, INSTANCE(next(ps)))
     update_span!(ret)
     return ret
 end

@@ -30,7 +30,7 @@ function parse_block(ps::ParseState, ret::EXPR{Block}, closers = Tokens.Kind[Tok
         end
         push!(ret, a)
         if ps.nt.kind == Tokens.SEMICOLON
-            push!(ret.args, INSTANCE(next(ps)))
+            push!(ret, INSTANCE(next(ps)))
         end
     end
     return ret

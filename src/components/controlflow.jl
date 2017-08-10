@@ -12,7 +12,7 @@ function parse_do(ps::ParseState, ret)
     end
     push!(ret, args)
     if ps.nt.kind == Tokens.SEMICOLON
-        push!(ret.args, INSTANCE(next(ps)))
+        push!(ret, INSTANCE(next(ps)))
     end
     block = EXPR{Block}(EXPR[], 0, 1:0, "")
     @catcherror ps @default ps parse_block(ps, block)

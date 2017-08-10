@@ -191,7 +191,7 @@ function parse_paren(ps::ParseState)
     @catcherror ps @default ps @nocloser ps inwhere @closer ps paren parse_comma_sep(ps, ret, false, true)
 
     if length(ret.args) == 2 && !(ret.args[2] isa EXPR{UnarySyntaxOpCall} && ret.args[2].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
-        
+
         # if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
             ret = EXPR{InvisBrackets}(ret.args, "")
         # end
@@ -266,7 +266,7 @@ function parse(ps::ParseState, cont = false)
             elseif ps.nt.kind == Tokens.SEMICOLON
                 push!(top, EXPR{TopLevel}(EXPR[ret], ""))
                 next(ps)
-                push!(top.args, INSTANCE(ps))
+                push!(top, INSTANCE(ps))
             else
                 push!(top, ret)
             end
@@ -289,7 +289,7 @@ function parse(ps::ParseState, cont = false)
                     last_line = ps.nt.startpos[1]
                     if ps.nt.kind == Tokens.SEMICOLON
                         next(ps)
-                        push!(top.args, INSTANCE(ps))
+                        push!(top, INSTANCE(ps))
                     end
                 end
             end

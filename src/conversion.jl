@@ -368,8 +368,12 @@ function Expr(x::EXPR{Begin})
 end
 
 function Expr(x::EXPR{Quote})
-    if x.args[2] isa EXPR{InvisBrackets} && (x.args[2].args[2] isa EXPR{OP} where OP <: OPERATOR || x.args[2].args[2] isa EXPR{L} where L <: LITERAL || x.args[2].args[2] isa EXPR{IDENTIFIER})
-        return QuoteNode(Expr(x.args[2]))
+    if x.args[2] isa EXPR{InvisBrackets}
+        if (x.args[2].args[2] isa EXPR{OP} where OP <: OPERATOR || x.args[2].args[2] isa EXPR{L} where L <: LITERAL || x.args[2].args[2] isa EXPR{IDENTIFIER})
+            return QuoteNode(Expr(x.args[2]))
+        else
+            return Expr(:quote, Expr(x.args[2]))
+        end
     elseif x.args[2] isa EXPR{TupleH}
         return Expr(:quote, Expr(x.args[2]))
     else

@@ -19,7 +19,7 @@ function test_expr(str)
 
     x0 = Expr(x)
     x1 = remlineinfo!(flisp_parse(str))
-    !ps.errored && x0 == x1# && isempty(span(x))
+    !ps.errored && x0 == x1 && isempty(CSTParser.check_span(x))
 end
 
 @testset "All tests" begin
