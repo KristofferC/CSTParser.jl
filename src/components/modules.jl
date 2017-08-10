@@ -15,7 +15,7 @@ function parse_kw(ps::ParseState, ::Type{T}) where T <:Union{Val{Tokens.MODULE},
     end
 
     block = EXPR{Block}(EXPR[], "")
-    parse_block(ps::ParseState, block, Tokens.Kind[Tokens.END], true)
+    @default ps parse_block(ps::ParseState, block, Tokens.Kind[Tokens.END], true)
     push!(ret, block)
     push!(ret, INSTANCE(next(ps)))
     return ret

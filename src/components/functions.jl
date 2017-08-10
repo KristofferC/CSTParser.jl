@@ -117,7 +117,7 @@ end
 
 
 function parse_comma_sep(ps::ParseState, ret::EXPR, kw = true, block = false)
-    @catcherror ps @nocloser ps inwhere @nocloser ps newline @closer ps comma while !closer(ps)
+    @catcherror ps @nocloser ps inwhere @nocloser ps newline @closer ps comma while !closer(ps) && ps.nt.kind !=Tokens.SEMICOLON
         a = parse_expression(ps)
 
         if kw && !ps.closer.brace && a isa EXPR{BinarySyntaxOpCall} && a.args[2] isa EXPR{OPERATOR{AssignmentOp,Tokens.EQ,false}}
@@ -127,12 +127,11 @@ function parse_comma_sep(ps::ParseState, ret::EXPR, kw = true, block = false)
         if ps.nt.kind == Tokens.COMMA
             push!(ret, INSTANCE(next(ps)))
         end
-        if ps.nt.kind == Tokens.SEMICOLON
-            push!(ret, INSTANCE(next(ps)))
-            break
-        end
     end
-
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret, INSTANCE(next(ps)))
+    end
+    
     if !isempty(ret.args) && last(ret.args) isa EXPR{PUNCTUATION{Tokens.SEMICOLON}}
         if block && !(ret isa EXPR{TupleH} && length(ret.args) > 2)
             body = EXPR{Block}(EXPR[pop!(ret)], "")

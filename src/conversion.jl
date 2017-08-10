@@ -382,6 +382,7 @@ function Expr(x::EXPR{Quote})
                 return Expr(:quote, Expr(a))
             end
         end
+        Expr(:quote, Expr(x.args[2]))
     end
 end
 

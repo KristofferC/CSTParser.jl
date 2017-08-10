@@ -187,17 +187,70 @@ Parses an expression starting with a `(`.
 """
 function parse_paren(ps::ParseState)
     ret = EXPR{TupleH}(EXPR[INSTANCE(ps)], "")
-
-    @catcherror ps @default ps @nocloser ps inwhere @closer ps paren parse_comma_sep(ps, ret, false, true)
-
-    if length(ret.args) == 2 && !(ret.args[2] isa EXPR{UnarySyntaxOpCall} && ret.args[2].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
-
-        # if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
-            ret = EXPR{InvisBrackets}(ret.args, "")
-        # end
+    opener = INSTANCE(ps)
+    if ps.nt.kind == Tokens.RPAREN
+        return EXPR{TupleH}(EXPR[opener, INSTANCE(next(ps))], "")
+    end
+    args = EXPR[]
+    hascomma = false
+    hassemicolon = false
+    @catcherror ps @default ps @nocloser ps inwhere @closer ps paren @nocloser ps newline @closer ps comma while !closer(ps)
+        a = parse_expression(ps)
+        push!(args, a)
+        if ps.nt.kind == Tokens.COMMA
+            push!(args, INSTANCE(next(ps)))
+            hascomma = true
+        elseif ps.nt.kind == Tokens.SEMICOLON
+            push!(args, INSTANCE(next(ps)))
+            hassemicolon = true
+        end
     end
 
-    push!(ret, INSTANCE(next(ps)))
+    if hascomma && !hassemicolon
+        unshift!(args, opener)
+        push!(args, INSTANCE(next(ps)))
+        ret = EXPR{TupleH}(args, "")
+    elseif !hascomma && hassemicolon
+        ret = EXPR{InvisBrackets}(EXPR[opener,EXPR{Block}(args, "")], "")
+        push!(ret, INSTANCE(next(ps)))
+    elseif hascomma && hassemicolon
+        ret = EXPR{TupleH}(EXPR[opener], "")
+        for i = 1:length(args)
+            if args[i] isa EXPR{PUNCTUATION{Tokens.SEMICOLON}}
+                paras = EXPR{Parameters}(EXPR[],"")
+                for j = i+1:length(args)
+                    if args[j] isa EXPR{BinarySyntaxOpCall} && args[j].args[2] isa EXPR{OPERATOR{AssignmentOp,Tokens.EQ,false}}
+                        push!(paras, EXPR{Kw}(args[j].args, ""))
+                    else
+                        push!(paras, args[j])
+                    end
+                end
+                insert!(ret.args, 2, paras)
+                push!(ret, INSTANCE(next(ps)))
+                update_span!(ret)
+                return ret
+            end
+            push!(ret, args[i])
+        end
+        push!(ret, INSTANCE(next(ps)))
+    elseif length(args) == 1 && !(args[1] isa EXPR{UnarySyntaxOpCall} && args[1].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
+        ret = EXPR{InvisBrackets}(EXPR[opener, args[1]], "")
+        push!(ret, INSTANCE(next(ps)))
+    else
+        unshift!(args, opener)
+        push!(args, INSTANCE(next(ps)))
+        ret = EXPR{TupleH}(args, "")
+    end
+
+    # @catcherror ps @default ps @nocloser ps inwhere @closer ps paren parse_comma_sep(ps, ret, false, true)
+
+    # if length(ret.args) == 2 && !(ret.args[2] isa EXPR{UnarySyntaxOpCall} && ret.args[2].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
+    #     # if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
+    #         ret = EXPR{InvisBrackets}(ret.args, "")
+    #     # end
+    # end
+
+    # push!(ret, INSTANCE(next(ps)))
     return ret
 end
 
