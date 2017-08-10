@@ -122,7 +122,7 @@ function parse_kw(ps::ParseState, ::Type{Val{Tokens.TRY}})
         else
             start_col = ps.t.startpos[2] + 4
             push!(ret, INSTANCE(ps))
-            if ps.ws.kind == SemiColonWS || ps.ws.kind == NewLineWS
+            if ps.nt.kind == Tokens.SEMICOLON || ps.ws.kind == NewLineWS
                 caught = FALSE
             else
                 @catcherror ps caught = @default ps @closer ps ws @closer ps trycatch parse_expression(ps)

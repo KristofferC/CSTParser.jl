@@ -1,20 +1,14 @@
-function parse_kw(ps::ParseState, ::Type{Val{Tokens.BEGIN}})
+function parse_kw(ps::ParseState, ::Type{T}) where T <: Union{Val{Tokens.BEGIN},Val{Tokens.QUOTE}}
     # Parsing
     kw = INSTANCE(ps)
-    arg = EXPR{Block}(EXPR[], 0, 1:0, "")
-    @catcherror ps arg = @default ps parse_block(ps, arg, Tokens.Kind[Tokens.END], true)
+    ret = EXPR{T == Val{Tokens.BEGIN} ? Begin : Quote}(EXPR[kw], "")
+    if ps.nt.kind == Tokens.SEMICOLON
+        push!(ret.args, INSTANCE(next(ps)))
+    end
+    push!(ret.args, EXPR{Block}(EXPR[], 0, 1:0, ""))
+    @catcherror ps @default ps parse_block(ps, last(ret.args), Tokens.Kind[Tokens.END], true)
 
-    next(ps)
-    return EXPR{Begin}(EXPR[kw; arg; INSTANCE(ps)], "")
-end
-
-function parse_kw(ps::ParseState, ::Type{Val{Tokens.QUOTE}})
-    kw = INSTANCE(ps)
-    arg = EXPR{Block}(EXPR[], 0, 1:0, "")
-    @catcherror ps @default ps parse_block(ps, arg)
-    next(ps)
-
-    ret = EXPR{Quote}(EXPR[kw, arg, INSTANCE(ps)], "")
+    push!(ret.args, INSTANCE(next(ps)))
     return ret
 end
 
@@ -34,6 +28,9 @@ function parse_block(ps::ParseState, ret::EXPR{Block}, closers = Tokens.Kind[Tok
             @catcherror ps a = @closer ps block parse_expression(ps)
         end
         push!(ret, a)
+        if ps.nt.kind == Tokens.SEMICOLON
+            push!(ret.args, INSTANCE(next(ps)))
+        end
     end
     return ret
 end

@@ -354,13 +354,23 @@ function Expr(x::EXPR{Parameters})
 end
 
 Expr(x::EXPR{InvisBrackets}) = Expr(x.args[2])
-Expr(x::EXPR{Begin}) = Expr(x.args[2])
+function Expr(x::EXPR{Begin}) 
+    for a in x.args
+        if a isa EXPR{Block}
+            return Expr(a)
+        end
+    end
+end
 
 function Expr(x::EXPR{Quote})
     if x.args[2] isa EXPR{InvisBrackets} && (x.args[2].args[2] isa EXPR{OP} where OP <: OPERATOR || x.args[2].args[2] isa EXPR{L} where L <: LITERAL || x.args[2].args[2] isa EXPR{IDENTIFIER})
         return QuoteNode(Expr(x.args[2]))
     else
-        return Expr(:quote, Expr(x.args[2]))
+        for a in x.args
+            if a isa EXPR{Block}
+                return Expr(:quote, Expr(a))
+            end
+        end
     end
 end
 

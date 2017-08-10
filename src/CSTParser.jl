@@ -192,9 +192,9 @@ function parse_paren(ps::ParseState)
 
     if length(ret.args) == 2 && !(ret.args[2] isa EXPR{UnarySyntaxOpCall} && ret.args[2].args[2] isa EXPR{OPERATOR{DddotOp,Tokens.DDDOT,false}})
 
-        if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
-            ret = EXPR{InvisBrackets}(ret.args, "")
-        end
+        # if ps.ws.kind != SemiColonWS || (length(ret.args) == 2 && ret.args[2] isa EXPR{Block})
+        #     ret = EXPR{InvisBrackets}(ret.args, "")
+        # end
     end
 
     # handle closing ')'
@@ -265,8 +265,10 @@ function parse(ps::ParseState, cont = false)
             # join semicolon sep items
             if curr_line == last_line && last(top.args) isa EXPR{TopLevel}
                 push!(last(top.args), ret)
-            elseif ps.ws.kind == SemiColonWS
+            elseif ps.nt.kind == Tokens.SEMICOLON
                 push!(top, EXPR{TopLevel}(EXPR[ret], ""))
+                next(ps)
+                push!(top.args, INSTANCE(ps))
             else
                 push!(top, ret)
             end
@@ -279,12 +281,18 @@ function parse(ps::ParseState, cont = false)
         else
             top = parse_doc(ps)
             last_line = ps.nt.startpos[1]
-            if ps.ws.kind == SemiColonWS
+            if ps.nt.kind == Tokens.SEMICOLON
                 top = EXPR{TopLevel}(EXPR[top], "")
-                while ps.ws.kind == SemiColonWS && ps.nt.startpos[1] == last_line && ps.nt.kind != Tokens.ENDMARKER
+                next(ps)
+                push!(top.args, INSTANCE(ps))
+                while ps.nt.startpos[1] == last_line && ps.nt.kind != Tokens.ENDMARKER
                     ret = parse_doc(ps)
                     push!(top, ret)
                     last_line = ps.nt.startpos[1]
+                    if ps.nt.kind == Tokens.SEMICOLON
+                        next(ps)
+                        push!(top.args, INSTANCE(ps))
+                    end
                 end
             end
         end
