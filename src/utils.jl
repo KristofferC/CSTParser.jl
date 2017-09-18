@@ -694,5 +694,4 @@ for t in (CSTParser.IDENTIFIER, CSTParser.OPERATOR, CSTParser.LITERAL, CSTParser
     Base.done(x::t, s) = true
 end
 
-@inline val(token::RawToken, ps::ParseState) = unsafe_string(pointer(ps.l.io.data), token.endbyte - token.startbyte + 1)
-@inline copy_val(token::RawToken, ps::ParseState) = String(ps.l.io.data[token.startbyte+1:token.endbyte+1])
+@inline val(token::RawToken, ps::ParseState) = String(ps.l.io.data[token.startbyte+1:token.endbyte+1])
