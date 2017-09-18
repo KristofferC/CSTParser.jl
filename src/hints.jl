@@ -94,7 +94,7 @@ function error_unexpected(ps, tok)
                          "Unexpected [")
     elseif tok.kind == Tokens.ERROR
         return make_error(ps, tok.startbyte:tok.endbyte, Diagnostics.UnexpectedRSquare,
-                            "Unexpected token $(val(tok, ps))")
+                            "Unexpected token $(copy_val(tok, ps))")
     else
         error("Internal error")
     end
