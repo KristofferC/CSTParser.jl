@@ -5,4 +5,4 @@ import CSTParser: parse, remlineinfo!, span, flisp_parse
 
 include("parser.jl")
 # include("diagnostics.jl")
-CSTParser.check_base()
+# CSTParser.check_base()
