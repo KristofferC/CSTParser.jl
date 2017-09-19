@@ -157,8 +157,6 @@ function parse_kw(ps)
         return parse_struct(ps, false)
     elseif k == Tokens.MUTABLE
         return parse_mutable(ps)
-    else
-        error("Unhandled token kind")
     end
 end
 
