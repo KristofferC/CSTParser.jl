@@ -12,6 +12,10 @@ function parse_module(ps::ParseState)
         push!(block, a)
     end
 
+    println("!!!!!!!!!!!!!!!!!")
+    println("The keyword is $kw")
+    println("!!!!!!!!!!!!!!!!")
+
     return EXPR{(is_module(kw) ? ModuleH : BareModule)}(Any[kw, arg, block, KEYWORD(next(ps))])
 end
 
