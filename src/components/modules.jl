@@ -1,5 +1,7 @@
 function parse_module(ps::ParseState)
+    println("First in function", ps.t.kind)
     kw = KEYWORD(ps)
+    println("Kw kind first: ", kw.kind)
     if ps.nt.kind == Tokens.IDENTIFIER
         arg = IDENTIFIER(next(ps))
     else
@@ -12,9 +14,7 @@ function parse_module(ps::ParseState)
         push!(block, a)
     end
 
-    println("!!!!!!!!!!!!!!!!!")
-    println("The keyword is $kw")
-    println("!!!!!!!!!!!!!!!!")
+    println("Kw kind last: ", kw.kind)
 
     return EXPR{(is_module(kw) ? ModuleH : BareModule)}(Any[kw, arg, block, KEYWORD(next(ps))])
 end

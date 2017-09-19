@@ -122,8 +122,10 @@ function parse_kw(ps)
     elseif k == Tokens.USING
         return parse_imports(ps)
     elseif k == Tokens.MODULE
+        println("if Tokens.MODULE ", ps.t.kind)
         return parse_module(ps)
     elseif k == Tokens.BAREMODULE
+        println("if Tokens.BAREMODULE ", ps.t.kind)
         return parse_module(ps)
     elseif k == Tokens.EXPORT
         return parse_export(ps)
@@ -155,6 +157,8 @@ function parse_kw(ps)
         return parse_struct(ps, false)
     elseif k == Tokens.MUTABLE
         return parse_mutable(ps)
+    else
+        error("Unhandled token kind")
     end
 end
 
