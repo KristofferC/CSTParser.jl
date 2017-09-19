@@ -23,7 +23,7 @@ function test_expr(str, show_data = true)
     x1 = remlineinfo!(flisp_parse(str))
     if ps.errored || x0 != x1
         if show_data
-            println("Mismatch between flisp and CSTParser when parsing string")
+            println("Mismatch between flisp and CSTParser when parsing string $str")
             println("ParserState:\n $ps\n")
             println("CSTParser Expr:\n $x\n")
             println("Converted CSTParser Expr:\n $x0\n")
